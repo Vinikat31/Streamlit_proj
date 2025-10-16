@@ -2,3 +2,4 @@ streamlit
 nmrglue
 matplotlib
 numpy
+plotly.graph_objects

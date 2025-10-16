@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 import tempfile
 import os
 
-st.title("Visualizador de Espectro ¹H-RMN (Bruker)")
+st.title("Visualizador de Espectro ¹H-RMN")
 
 # --- Upload múltiplo de arquivos ---
 uploaded_files = st.file_uploader(

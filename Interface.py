@@ -8,7 +8,7 @@ import os
 st.title("Visualizador de Espectro ¹H-RMN")
 
 # --- Upload múltiplo de arquivos ---
-uploaded_files = st.file_uploader(
+uploaded_files = st.sidebar.file_uploader(
     "Selecione todos os arquivos da pasta 'pdata/1' do Bruker",
     accept_multiple_files=True
 )

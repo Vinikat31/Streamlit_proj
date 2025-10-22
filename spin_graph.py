@@ -316,7 +316,7 @@ def update_graph(theta, phi, omega_ref, wnut, phi_p, tau, time):
         ),
 
         width=1000,  # largura do gráfico
-        height=500,  # altura do gráfico
+        height=800,  # altura do gráfico
         margin=dict(l=0, r=0, t=0, b=0),  # reduz margens
         paper_bgcolor='white',
         plot_bgcolor='white',

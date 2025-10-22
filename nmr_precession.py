@@ -3,7 +3,10 @@ import spin_graph as spg
 import pulse_sequence as ps
 
 
-
+st.set_page_config(
+    page_title="Visualizador de RMN",
+    layout="wide"
+)
 # --- Inputs do usuário ---
 st.sidebar.header("NMR Spin Simulator")
 theta = st.sidebar.number_input("θ (°)", min_value=0, max_value=180, value=0, step=10)
@@ -31,8 +34,8 @@ config = {
     "responsive": True         # Faz o gráfico se ajustar à largura do container
 }
 
-st.plotly_chart(fig_inset, use_container_width=False, config=config)
+st.plotly_chart(fig_inset, use_container_width=True, config=config)
 
-st.plotly_chart(fig_main, use_container_width=False, config=config)
+st.plotly_chart(fig_main, use_container_width=True, config=config)
 
 

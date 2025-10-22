@@ -3,4 +3,3 @@ nmrglue
 matplotlib
 numpy
 plotly
-

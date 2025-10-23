@@ -35,8 +35,11 @@ if uploaded_zip:
         temp_dir = tempfile.mkdtemp()
 
         # Extrai o ZIP para temp_dir
-        with zipfile.ZipFile(tmp_zip.name, "r") as zip_ref:
-            zip_ref.extractall(temp_dir)
+        raiz_bruker = temp_dir
+        for root, dirs, files in os.walk(temp_dir):
+            if "pdata" in dirs:
+                raiz_bruker = os.path.dirname(root)
+                break
 
 
         # Remove o arquivo zip temporário para não deixar lixo
@@ -47,8 +50,8 @@ if uploaded_zip:
 
         # Lista subpastas (cada espectro é uma subpasta)
         subdirs = sorted(
-            [d for d in os.listdir(temp_dir) if os.path.isdir(os.path.join(temp_dir, d))],
-            key=extract_number
+            [d for d in os.listdir(raiz_bruker) if os.path.isdir(os.path.join(raiz_bruker, d))],
+            key=lambda x: int(''.join(filter(str.isdigit, x))) if any(ch.isdigit() for ch in x) else 0
         )
 
         if not subdirs:

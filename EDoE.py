@@ -63,6 +63,27 @@ with st.expander("📥 1. Selecione seu arquivo Excel (.xlsx ou .xls)", expanded
 # ==========================================
 if st.session_state.get("efeito") is not None:
     with st.expander("📋 3. Resultados e Gráficos", expanded=True):
+        # Campos de entrada para erro_efeito e t
+        col1, col2 = st.columns(2)
+        with col1:
+            erro_efeito_val = st.number_input(
+                "⚠️ Valor de erro do efeito",
+                min_value=0.0,
+                value=2.0,
+                step=0.1
+            )
+        with col2:
+            t_val = st.number_input(
+                "🧮 Valor de t",
+                min_value=0.0,
+                value=0.05,
+                step=0.01
+            )
         st.write("### Efeito")
-        ed.plot_efeito(st.session_state["efeito"], st.session_state["porc"], erro_efeito=2, t=0.05)
+        ed.plot_efeito(
+            st.session_state["efeito"],
+            st.session_state["porc"],
+            erro_efeito=erro_efeito_val,
+            t=t_val
+        )
 

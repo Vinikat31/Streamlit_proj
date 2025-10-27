@@ -139,7 +139,15 @@ if uploaded_zip:
                 except Exception as e:
                     erros.append(f"Erro ao carregar {pasta}: {e}")
 
-            # Exibe os resultados
+            # --- Após o carregamento, remove o arquivo ZIP e libera memória ---
+            try:
+                if os.path.exists(tmp_zip.name):
+                    os.remove(tmp_zip.name)
+                    st.sidebar.success("🗑️ Arquivo ZIP temporário removido para liberar memória.")
+            except Exception as e:
+                st.sidebar.warning(f"Não foi possível excluir o ZIP temporário: {e}")
+
+            # --- Exibe os resultados ---
             if figs:
                 tab_objs = st.tabs(tabs)
                 for tab, fig in zip(tab_objs, figs):
@@ -152,6 +160,7 @@ if uploaded_zip:
                 st.error("Ocorreram alguns problemas:")
                 for msg in erros:
                     st.write("•", msg)
+
 
     finally:
         # garantia de limpeza: se o temp ZIP ainda existir, remove

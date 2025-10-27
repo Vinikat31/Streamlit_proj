@@ -41,6 +41,7 @@ if uploaded_zip:
             zip_ref.extractall(temp_dir)
 
         # Agora temp_dir tem o conteúdo do ZIP, e você pode percorrer
+        st.write(f"{temp_dir}/RMN")
         pastas_num = []
 
         for root, dirs, files in os.walk(temp_dir):

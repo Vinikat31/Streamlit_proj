@@ -69,15 +69,15 @@ if st.session_state.get("efeito") is not None:
             erro_efeito_val = st.number_input(
                 "⚠️ Valor de erro do efeito",
                 min_value=0.0,
-                value=2.0,
-                step=0.1
+                value=1.0,
+                step=0.5
             )
         with col2:
             t_val = st.number_input(
                 "🧮 Valor de t",
                 min_value=0.0,
-                value=0.05,
-                step=0.01
+                value=0.95,
+                step=0.05
             )
         st.write("### Efeito")
         ed.plot_efeito(

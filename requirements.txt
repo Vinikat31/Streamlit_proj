@@ -3,3 +3,4 @@ nmrglue
 matplotlib
 numpy
 plotly
+streamlit_excel_table

@@ -48,8 +48,8 @@ def read_bruker(folder_path, calib_range=(-0.05, 0.05), tol_ppm=0.1):
     pastas_validas = []
 
     for pasta in pastas:
-        caminho = os.path.join(folder_path, pasta, r'2\pdata\1')
-        fid_path = os.path.join(folder_path, pasta, r'2\fid')
+        caminho = os.path.join(folder_path, pasta, r'2\pdata\1').replace('\\', '/')
+        fid_path = os.path.join(folder_path, pasta, r'2\fid').replace('\\', '/')
 
         # Verifica se os arquivos necessários existem
         if not os.path.exists(caminho) or not os.path.isfile(fid_path):

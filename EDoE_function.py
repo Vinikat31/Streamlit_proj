@@ -121,9 +121,9 @@ def fabi_efeito(df, df_desing):
     X = df_desing.apply(pd.to_numeric, errors="coerce").fillna(0).values.astype(float)
 
     # Coluna de resposta
-    col_resposta = [c for c in df.columns if "@resposta" in c.lower()]
+    col_resposta = [c for c in df.columns if "$resposta" in c.lower()]
     if not col_resposta:
-        st.error("❌ Coluna de resposta '@resposta' não encontrada.")
+        st.error("❌ Coluna de resposta '$resposta' não encontrada.")
         return None, None
 
     y = pd.to_numeric(df[col_resposta[0]], errors="coerce").fillna(0).values.reshape(-1, 1).astype(float)

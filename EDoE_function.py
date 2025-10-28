@@ -37,13 +37,13 @@ def extrair_tabela_marcas(df):
             if isinstance(value, str):
                 if first_hash is None and '#' in value:
                     first_hash = (row_idx, col_idx)
-                if '$' in value:
+                if '@' in value:
                     last_at = (row_idx, col_idx)
 
     if first_hash is None:
-        raise ValueError("Nenhum '&' encontrado no DataFrame.")
+        raise ValueError("Nenhum '#' encontrado no DataFrame.")
     if last_at is None:
-        raise ValueError("Nenhum '$' encontrado no DataFrame.")
+        raise ValueError("Nenhum '@' encontrado no DataFrame.")
 
     # Posicionamentos
     first_row, first_col = first_hash

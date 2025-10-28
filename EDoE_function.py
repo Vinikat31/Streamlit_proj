@@ -12,9 +12,9 @@ def extrair_tabela_marcas(df):
 
     A função:
       - Procura o primeiro '#' (define início)
-      - Procura o último '@' (define fim)
+      - Procura o último '$' (define fim)
       - Encontra o primeiro NaN abaixo do '#'
-      - Seleciona as colunas entre '#' e '@'
+      - Seleciona as colunas entre '#' e '$'
       - Usa a primeira linha selecionada como cabeçalho da nova tabela
 
     Parâmetros
@@ -37,13 +37,13 @@ def extrair_tabela_marcas(df):
             if isinstance(value, str):
                 if first_hash is None and '#' in value:
                     first_hash = (row_idx, col_idx)
-                if '@' in value:
+                if '$' in value:
                     last_at = (row_idx, col_idx)
 
     if first_hash is None:
         raise ValueError("Nenhum '#' encontrado no DataFrame.")
     if last_at is None:
-        raise ValueError("Nenhum '@' encontrado no DataFrame.")
+        raise ValueError("Nenhum '$' encontrado no DataFrame.")
 
     # Posicionamentos
     first_row, first_col = first_hash

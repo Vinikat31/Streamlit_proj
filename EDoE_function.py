@@ -35,7 +35,7 @@ def extrair_tabela_marcas(df):
     for row_idx, row in df.iterrows():
         for col_idx, value in row.items():
             if isinstance(value, str):
-                if first_hash is None and '&' in value:
+                if first_hash is None and '#' in value:
                     first_hash = (row_idx, col_idx)
                 if '$' in value:
                     last_at = (row_idx, col_idx)

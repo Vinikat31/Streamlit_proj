@@ -150,6 +150,18 @@ def norma_nmr(df_nmr, faixa_ppm=(-0.5, 10), metodo='simpson', plotar=True):
     """
 
     # --- 1. Separa valores e metadados ---
+    try:
+        _ = df_nmr.columns.astype(float)
+        print("✅ Colunas numéricas confirmadas.")
+    except ValueError:
+        print("⚠️ Colunas não são numéricas. Tentando transpor o DataFrame...")
+        df_nmr = df_nmr.T
+        try:
+            _ = df_nmr.columns.astype(float)
+            print("✅ Após transposição, colunas numéricas confirmadas.")
+        except ValueError:
+            raise ValueError("Mesmo após transpor, os nomes das colunas ainda não são numéricos.")
+
     df_valores = df_nmr.select_dtypes(include='number').copy()
     ppm_numeric = df_valores.columns.astype(float)
     df_metadata = df_nmr.select_dtypes(exclude='number')

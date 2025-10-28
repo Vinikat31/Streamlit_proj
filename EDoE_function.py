@@ -122,11 +122,13 @@ def fabi_efeito(df, df_desing):
 
     # Coluna de resposta
     col_resposta = df.columns[-1]
+    print(col_resposta)
     if not col_resposta:
         st.error("❌ Coluna de resposta '$resposta' não encontrada.")
         return None, None
 
-    y = pd.to_numeric(df[col_resposta[0]], errors="coerce").fillna(0).values.reshape(-1, 1).astype(float)
+    y = pd.to_numeric(df[col_resposta], errors="coerce").fillna(0).values.reshape(-1, 1).astype(float)
+    print(y)
 
     # Calcular efeitos usando pseudoinversa
     try:

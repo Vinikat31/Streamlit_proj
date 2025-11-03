@@ -1,21 +1,15 @@
 import pandas as pd
 import itertools
 import numpy as np
-import matplotlib.pyplot as plt
 import streamlit as st
 from scipy.stats import norm
 import altair as alt
 
 def extrair_tabela_marcas(df):
     """
-    Extrai uma sub-tabela de um DataFrame com base nas marcas '#' (início) e '@' (fim).
+    Extrai uma sub-tabela de um DataFrame com base nas marcas '#' (início) e '$' (fim).
 
-    A função:
-      - Procura o primeiro '#' (define início)
-      - Procura o último '$' (define fim)
-      - Encontra o primeiro NaN abaixo do '#'
-      - Seleciona as colunas entre '#' e '$'
-      - Usa a primeira linha selecionada como cabeçalho da nova tabela
+    Funciona para tabelas com um ou múltiplos '$'.
 
     Parâmetros
     ----------
@@ -27,37 +21,25 @@ def extrair_tabela_marcas(df):
     df_new : pd.DataFrame
         Novo DataFrame extraído entre as marcas.
     """
-
     first_hash = None
-    last_at = None
+    last_dollar = None
 
-    # Procurar o primeiro '#' e o último '@'
+    # Procurar o primeiro '#' e o último '$'
     for row_idx, row in df.iterrows():
         for col_idx, value in row.items():
             if isinstance(value, str):
                 if first_hash is None and '#' in value:
                     first_hash = (row_idx, col_idx)
                 if '$' in value:
-                    last_at = (row_idx, col_idx)
+                    last_dollar = (row_idx, col_idx)  # sempre sobrescreve, pega o último
 
     if first_hash is None:
         raise ValueError("Nenhum '#' encontrado no DataFrame.")
-    if last_at is None:
+    if last_dollar is None:
         raise ValueError("Nenhum '$' encontrado no DataFrame.")
 
-    # Posicionamentos
     first_row, first_col = first_hash
-    last_row, last_col = last_at
-
-    # Encontrar o primeiro NaN abaixo do primeiro '#'
-    col_values = df[first_col]
-    subsequent_values = col_values.iloc[first_row + 1:]
-    nan_index = subsequent_values.index[subsequent_values.isna()].tolist()
-
-    if not nan_index:
-        end_row = df.index[-1]  # Última linha
-    else:
-        end_row = nan_index[0] - 1  # Linha antes do NaN
+    _, last_col = last_dollar  # não precisamos da linha do $
 
     # Selecionar colunas entre first_col e last_col
     cols = list(df.columns)
@@ -65,19 +47,25 @@ def extrair_tabela_marcas(df):
     last_col_idx = cols.index(last_col)
     if first_col_idx > last_col_idx:
         first_col_idx, last_col_idx = last_col_idx, first_col_idx
-
     selected_cols = cols[first_col_idx : last_col_idx + 1]
 
-    # Fatiar DataFrame
-    df_new = df.loc[first_row : end_row, selected_cols]
+    # Pegar todas as linhas abaixo do cabeçalho até a última linha não vazia
+    df_block = df.loc[first_row:, selected_cols]
+
+    # Encontrar a primeira linha totalmente vazia para cortar (opcional)
+    is_all_nan = df_block.isna().all(axis=1)
+    if is_all_nan.any():
+        last_data_idx = is_all_nan.idxmax() - 1
+        df_block = df_block.loc[:last_data_idx]
 
     # Definir cabeçalho
-    new_header = df_new.iloc[0]
-    df_new_data = df_new[1:]
+    new_header = df_block.iloc[0]
+    df_new_data = df_block[1:]
     df_new_data.columns = new_header
     df_new = df_new_data.reset_index(drop=True)
 
     return df_new
+
 
 def gera_design_fatorial(df):
     fatores = [col for col in df.columns if '#' in col]
@@ -149,94 +137,130 @@ def fabi_efeito(df, df_desing):
 
 
 
-def plot_efeito(efeito, porc, erro_efeito=2, t=2):
+def plot_efeito(df, df_desing):
     """
-    Plota gráficos de porcentagem e probabilidade normal dos efeitos lado a lado no Streamlit.
+    Plota gráficos de porcentagem e probabilidade normal dos efeitos para todas as colunas de resposta
+    que começam com '$', dentro de expanders no Streamlit.
+    Inclui também a tabela de efeito e porcentagem em cada expander.
+    Calcula automaticamente erro_efeito e t_val.
     """
 
-    m = len(efeito)
 
-    # ------------------------
-    # Criar coluna temporária para gráfico 1
-    # ------------------------
-    df_graph1 = pd.DataFrame({
-        "Porcentagem (%)": np.round(porc, 2),
-        "Efeito_idx": np.arange(1, m + 1)
-    })
+    # Identifica todas as colunas de resposta que começam com '$'
+    col_respostas = [col for col in df.columns if col.startswith("$")]
 
-    # ------------------------
-    # Ordenar efeitos para gráfico de probabilidade normal
-    # ------------------------
-    D = np.argsort(efeito)
-    C = efeito[D].astype(float)
+    for resposta in col_respostas:
+        # Cria um expander para cada resposta
+        with st.expander(f"📊 Gráficos para {resposta}", expanded=False):
+            try:
+                # Calcula efeito e porcentagem para a resposta específica
+                efeito, porc = fabi_efeito(df[[resposta]], df_desing)
 
-    # Percentis para gráfico normal
-    A = np.zeros((m, 3))
-    for i in range(1, m):
-        A[i, 0] = i / m
-    for i in range(m):
-        A[i, 1] = (i + 1) / m
-    for i in range(m):
-        A[i, 2] = (A[i, 0] + A[i, 1]) / 2
+                # ------------------------
+                # Calcula erro_efeito e t_val automaticamente
+                # ------------------------
+                erro_efeito = np.std(efeito)  # exemplo: desvio padrão dos efeitos
+                t_val = 0.95  # exemplo: nível de confiança (pode vir de outra função)
 
-    B = norm.ppf(A[:, 2])
-    B = np.asarray(B[:m], dtype=float)
+                # ------------------------
+                # Valida os dados
+                # ------------------------
+                if efeito is None or porc is None or len(efeito) == 0 or len(porc) == 0:
+                    raise ValueError("Os dados de efeito ou porcentagem estão vazios.")
+                if len(efeito) != len(porc):
+                    raise ValueError("As listas 'efeito' e 'porc' devem ter o mesmo comprimento.")
 
-    # ------------------------
-    # Layout: gráficos lado a lado
-    # ------------------------
-    col_graph1, col_graph2 = st.columns(2)
+                efeito = np.asarray(efeito, dtype=float)
+                porc = np.asarray(porc, dtype=float)
+                m = len(efeito)
 
-    # ---- Gráfico 1: Porcentagem dos efeitos ----
-    with col_graph1:
-        chart1 = alt.Chart(df_graph1).mark_bar(color='mediumorchid').encode(
-            x='Efeito_idx:O',
-            y='Porcentagem (%):Q'
-        ).properties(title='Porcentagem dos Efeitos')
-        st.altair_chart(chart1, use_container_width=True)
 
-    # ---- Gráfico 2: Probabilidade normal dos efeitos ----
-    with col_graph2:
-        df_prob = pd.DataFrame({
-            'Efeito': C,
-            'Z': B,
-            'Label': (D + 1).astype(str)
-        })
+                # ------------------------
+                # Gráfico 1: Porcentagem dos efeitos
+                # ------------------------
+                df_graph1 = pd.DataFrame({
+                    "Porcentagem (%)": np.round(porc, 2),
+                    "Efeito_idx": np.arange(1, m + 1)
+                })
 
-        base = alt.Chart(df_prob).encode(
-            x='Efeito:Q',
-            y='Z:Q'
-        )
+                # ------------------------
+                # Gráfico 2: Probabilidade normal
+                # ------------------------
+                D = np.argsort(efeito)
+                C = efeito[D]
 
-        points = base.mark_point(shape='square', color='red', size=100)
-        text = base.mark_text(
-            align='left', dx=5, dy=-5, color='black'
-        ).encode(text='Label')
+                A = np.zeros((m, 3))
+                for i in range(1, m):
+                    A[i, 0] = i / m
+                for i in range(m):
+                    A[i, 1] = (i + 1) / m
+                for i in range(m):
+                    A[i, 2] = (A[i, 0] + A[i, 1]) / 2
 
-        chart2 = (points + text).properties(title='Gráfico de Probabilidade Normal dos Efeitos')
+                B = norm.ppf(A[:, 2])
+                B = np.asarray(B[:m], dtype=float)
 
-        if erro_efeito != 0 and t != 0:
-            E = erro_efeito * t
+                # Layout dos gráficos lado a lado
+                col_graph1, col_graph2 = st.columns(2)
 
-            # Linha positiva
-            chart2 = chart2 + alt.Chart(pd.DataFrame({'x': [E], 'y0': [B.min()], 'y1': [B.max()]})).mark_rule(
-                color='red'
-            ).encode(
-                x='x:Q',
-                y='y0:Q',
-                y2='y1:Q'
-            )
+                # ---- Gráfico 1: Porcentagem ----
+                with col_graph1:
+                    chart1 = alt.Chart(df_graph1).mark_bar(color='mediumorchid').encode(
+                        x=alt.X('Efeito_idx:O', title='Efeito'),
+                        y=alt.Y('Porcentagem (%):Q', title='Porcentagem (%)')
+                    ).properties(title='Porcentagem dos Efeitos')
+                    linha0 = alt.Chart(pd.DataFrame({'y': [0]})).mark_rule(color='red', strokeDash=[5, 3]).encode(y='y:Q')
+                    st.altair_chart(chart1 + linha0, use_container_width=True)
 
-            # Linha negativa
-            chart2 = chart2 + alt.Chart(pd.DataFrame({'x': [-E], 'y0': [B.min()], 'y1': [B.max()]})).mark_rule(
-                color='red'
-            ).encode(
-                x='x:Q',
-                y='y0:Q',
-                y2='y1:Q'
-            )
+                # ---- Gráfico 2: Probabilidade Normal ----
+                with col_graph2:
+                    df_prob = pd.DataFrame({
+                        'Efeito': C,
+                        'Z': B,
+                        'Label': (D + 1).astype(str)
+                    })
 
-        st.altair_chart(chart2, use_container_width=True)
+                    base = alt.Chart(df_prob).encode(
+                        x=alt.X('Efeito:Q', title='Efeito'),
+                        y=alt.Y('Z:Q', title='Quantil Normal (Z)')
+                    )
+
+                    points = base.mark_point(shape='square', color='red', size=100)
+                    text = base.mark_text(align='left', dx=5, dy=-5, color='black').encode(text='Label')
+                    chart2 = (points + text).properties(title='Gráfico de Probabilidade Normal dos Efeitos')
+
+                    # Linhas de erro
+                    E = erro_efeito * t_val
+                    linha_pos = alt.Chart(pd.DataFrame({'x': [E]})).mark_rule(color='red').encode(x='x:Q')
+                    linha_neg = alt.Chart(pd.DataFrame({'x': [-E]})).mark_rule(color='red').encode(x='x:Q')
+
+                    st.altair_chart(chart2 + linha_pos + linha_neg, use_container_width=True)
+
+                # ------------------------
+                # Cria tabela de efeito e porcentagem
+                # ------------------------
+                tabela_efeito = pd.DataFrame({
+                    "Efeito": efeito,
+                    "Porcentagem (%)": np.round(porc, 2)
+                })
+                st.markdown("### Tabela de Efeito e Porcentagem")
+                st.dataframe(tabela_efeito)
+
+            except Exception as e:
+                # ------------------------
+                # Mostra erro se houver problema nos dados
+                # ------------------------
+                col_graph1, col_graph2 = st.columns(2)
+                for col in [col_graph1, col_graph2]:
+                    with col:
+                        st.altair_chart(
+                            alt.Chart(pd.DataFrame({'x': [0], 'y': [0], 'erro': [f"❌ Erro: {e}"]}))
+                            .mark_text(size=14, color='red', align='center', baseline='middle')
+                            .encode(x='x', y='y', text='erro')
+                            .properties(title='Erro ao gerar gráfico'),
+                            use_container_width=True
+                        )
+
 
 
 

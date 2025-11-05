@@ -1,10 +1,5 @@
 import pandas as pd
 import itertools
-import numpy as np
-import matplotlib.pyplot as plt
-import streamlit as st
-from scipy.stats import norm
-import altair as alt
 
 def extrair_tabela_marcas(df):
     """
@@ -186,12 +181,6 @@ def plot_efeito(df, df_desing, erro_efeito_val=None, t_val=None):
     que começam com '$', dentro de expanders no Streamlit.
     Usa erro_efeito_val e t_val já calculados em fabi_efeito.
     """
-
-    import numpy as np
-    import pandas as pd
-    import altair as alt
-    from scipy.stats import norm
-    import streamlit as st
 
     col_respostas = [col for col in df.columns if col.startswith("$")]
 

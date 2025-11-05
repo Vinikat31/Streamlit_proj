@@ -1,5 +1,10 @@
 import pandas as pd
 import itertools
+import streamlit as st
+import numpy as np
+import altair as alt
+from scipy.stats import norm
+
 
 def extrair_tabela_marcas(df):
     """

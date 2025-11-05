@@ -1,12 +1,21 @@
+# ==========================================
+# 🧠 Importação de bibliotecas
+# ==========================================
 import streamlit as st
 import pandas as pd
 import numpy as np
-import EDoE_function as ed  # Certifique-se que fabi_efeito e plot_efeito estão aqui
+import EDoE_function as ed  # Arquivo com as funções auxiliares
 
+# ==========================================
+# ⚙️ Configuração inicial da página
+# ==========================================
 st.set_page_config(page_title="Visualizador Excel Interativo", layout="wide")
 st.title("📘 Visualizador Interativo de Arquivo Excel")
 
-# Inicializa session_state
+# ==========================================
+# 🔁 Inicialização do estado da sessão
+# ==========================================
+# Isso garante que os dados não se percam quando o Streamlit recarregar a interface
 if "df" not in st.session_state:
     st.session_state["df"] = None
 if "efeito" not in st.session_state:
@@ -15,30 +24,34 @@ if "porc" not in st.session_state:
     st.session_state["porc"] = None
 
 # ==========================================
-# 1ª ABA — Upload do Excel
+# 📥 1ª SEÇÃO — Upload do arquivo Excel
 # ==========================================
 with st.expander("📥 1. Selecione seu arquivo Excel (.xlsx ou .xls)", expanded=True):
+
+    # Upload do arquivo pelo usuário
     uploaded_file = st.file_uploader("", type=["xlsx", "xls"])
 
     if uploaded_file is not None:
+        # Lê o Excel enviado
         df = pd.read_excel(uploaded_file)
 
-        # Extrai a tabela delimitada por '#' e '@'
+        # Extrai a tabela delimitada por '#' e '@' usando função personalizada
         df = ed.extrair_tabela_marcas(df)
 
-        # Gera o design fatorial
+        # Gera automaticamente o design fatorial correspondente
         df_desing = ed.gera_design_fatorial(df)
 
-        # Substitui NaN para exibição
+        # Substitui valores NaN por string vazia (para melhor exibição)
         df_display = df.fillna("")
 
-        # Armazena no estado
+        # Armazena as tabelas no estado da sessão
         st.session_state["df"] = df_display
         st.session_state["df_desing"] = df_desing
 
+        # Mensagem de sucesso
         st.success("✅ Arquivo carregado com sucesso!")
 
-        # Mostrar DataFrames lado a lado
+        # Mostra as tabelas lado a lado
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("### 📄 Tabela Original")
@@ -47,23 +60,27 @@ with st.expander("📥 1. Selecione seu arquivo Excel (.xlsx ou .xls)", expanded
             st.markdown("### ⚙️ Design Fatorial Gerado")
             st.dataframe(df_desing, use_container_width=True)
 
-        # Botão para calcular efeito
-        if st.button("Efeito Fabi"):
+        # Botão para calcular os efeitos (Efeito Fabi)
+        if st.button("📊 Calcular Efeito Fabi"):
             efeito, porc = ed.fabi_efeito(df, df_desing)
+
             if efeito is not None:
+                # Salva os resultados no session_state
                 st.session_state["efeito"] = efeito
                 st.session_state["porc"] = porc
+
+                # Confirmação visual
                 st.success(f"✅ Nova tabela criada ({len(efeito)} efeitos)")
 
 
-
-
 # ==========================================
-# 2ª ABA — Exibir nova tabela e gráficos
+# 📊 2ª SEÇÃO — Exibir resultados e gráficos
 # ==========================================
+# Essa seção é carregada apenas se os efeitos já foram calculados
 if st.session_state.get("efeito") is not None:
-    with st.expander("📋 3. Resultados e Gráficos", expanded=True):
-        # Campos de entrada para erro_efeito e t
+    with st.expander("📈 2. Resultados e Gráficos", expanded=True):
+
+        # Entradas para o erro e o valor t
         col1, col2 = st.columns(2)
         with col1:
             erro_efeito_val = st.number_input(
@@ -79,11 +96,12 @@ if st.session_state.get("efeito") is not None:
                 value=0.95,
                 step=0.05
             )
-        st.write("### Efeito")
-        ed.plot_efeito(
-            st.session_state["efeito"],
-            st.session_state["porc"],
-            erro_efeito=erro_efeito_val,
-            t=t_val
-        )
 
+        # Exibe os gráficos de efeitos com base nas funções definidas em EDoE_function
+        st.write("### 🔍 Análise dos Efeitos")
+        ed.plot_efeito(
+            st.session_state["df"],
+            st.session_state["df_desing"],
+            erro_efeito_val=erro_efeito_val,
+            t_val=t_val
+        )
